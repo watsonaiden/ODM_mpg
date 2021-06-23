@@ -70,10 +70,10 @@ class GCP_pic:
 
     def __str__(self):
         split_filename = self.filename.split('/')[-1]
-        return f'{split_filename} lat ={self.lat}, long = {self.lon}'
+        return f'{split_filename}'
 
     def __repr__(self):
-        return f'GCP_Object({self.filename})'
+        return f'GCP_Object({self})'
 
     def __lt__(self,other):
         return (self.gcp_dict['distance'] < other.gcp_dict['distance'])
@@ -81,7 +81,7 @@ class GCP_pic:
 
 #get GCP gps values from excel fil
 # returns dictionary with key = group value = array of gps tuples
-def get_GCP_GPS(filename='../Datasets/MPG_Biomass_Pre_GCP.csv'):
+def get_GCP_GPS(filename):
 
     df = pd.read_csv(filename)
     GCP_dict = {}
@@ -124,7 +124,7 @@ def find_min(dic, lat_long):
     return min_name
 
 # return list of Pics ordered by distance to any GCP
-def order_pic(GCP_dict):
+def order_pic(GCP_dict, images_directory):
    # pass dictionary from get_GCP_GPS function
     order = []
 
@@ -148,8 +148,9 @@ def order_pic(GCP_dict):
 
     
     # this is the slowest part of the code
-    for filename in os.listdir('../Datasets/project/images'):
-        GCP = GCP_pic('../Datasets/project/images/'+filename)
+    print('sorting images by distance to a GCP', flush=True)
+    for filename in os.listdir(images_directory):
+        GCP = GCP_pic(images_directory+filename)
         np_gps = np.array(GCP.gps_tuple())
         # get closest point
         dist, ind = kdTree.query(np_gps, 1)
@@ -158,11 +159,17 @@ def order_pic(GCP_dict):
         order.append(GCP)
         
     sorted_order = sorted(order) 
-
+    print('Finished sorting', flush=True)
     return sorted_order
 
 # allow users to select pixel of GCP and returns a array of GCP_img classes with GCP in them
-def user_GCP_select(sorted_GCP, skip_threshold=4 ):
+def user_GCP_select(sorted_GCP, skip_threshold=4):
+    print('*'*40)
+    print('INSTRUCTIONS')
+    print('If image has a GCP then double click on its location')
+    print('If image does not contain GCP please just exit out')
+    print('*'*40, flush=True)
+
     pixel_x, pixel_y = 0,0
     GCP_img_list = []
     count = 0
@@ -172,10 +179,14 @@ def user_GCP_select(sorted_GCP, skip_threshold=4 ):
         if count >= skip_threshold:
             print(f'{skip_threshold} skipped in row and thus exited')
             break
-        print(GCP_img)
-        print(GCP_img.filename)
         image =plt.imread(GCP_img.filename)
+        # get actual filename since filename includes the path
+        split_filename = GCP_img.filename.split('/')[-1]
+
         fig, ax = plt.subplots()
+        fig.canvas.set_window_title(split_filename)
+        # pyplot has origin in top left while most programs expect bottom left thus need to flip
+        # https://stackoverflow.com/questions/56916638/invert-the-y-axis-of-an-image-without-flipping-the-image-upside-down 
         ax.imshow(image)
         
         def onclick(event):
@@ -184,22 +195,26 @@ def user_GCP_select(sorted_GCP, skip_threshold=4 ):
 
             if event.dblclick:
                 # reset count every time ground control point double clicked
-                print('double click recieved','*'*30)
+                print(GCP_img)
+                print('double click recieved')
                 nonlocal count
                 count = 0
                 pixel_x = event.xdata
                 pixel_y = event.ydata
+                print(f'click at {pixel_x=}, {pixel_y=}')
                 #   print('data', event.xdata, event.ydata)
                 #    GCP_list[-1].append((int(event.xdata),int(event.ydata)))
-        
+                print('_'*40, flush=True) 
+                plt.close()
+                
         count += 1
         cid = fig.canvas.mpl_connect('button_press_event', onclick)
         plt.show()
-        print(f'{GCP_img}, {count=}')
         # count only 0 if user double clicked and thus must store value 
         if count == 0:
             GCP_img.GCP_link(pixel_x, pixel_y)
             GCP_img_list.append(GCP_img)
+
     return GCP_img_list
 
 # for converting from lat long to UTM which ODM requires
@@ -210,7 +225,7 @@ def convert_coordinate_UTM(gps):
     return  x1, y1, z
 
 
-def create_GCP_file(GCP_list, coor_system='EPSG:32611', filename='gcp_list.txt'):
+def create_GCP_file(GCP_list, coor_system='+proj=utm +zone=11 +ellps=WGS84 +datum=WGS84 +units=m +no_defs' , filename='gcp_list.txt'):
     # ODM looks for this filename
     with open(filename, 'w') as f:
         f.write(f'{coor_system}\n')
@@ -231,6 +246,6 @@ if __name__ == '__main__':
     GCP_img_list = user_GCP_select(sorted_GCP)    
     
     # write GCP to file using ODM required style
-    create_GCP_file(GCP_img_list, filename='test_gcp.txt')    
+    create_GCP_file(GCP_img_list, filename='txt_output/test_gcp.txt')    
 
 
