@@ -4,15 +4,15 @@ import rasterio as rio
 import pandas as pd
 import os
 from GCP import convert_coordinate_UTM
-from writer import save_image
+from writer import save_image, save_data
 
 class ODM:
     def __init__(self, locations):
         self.locations = locations
-        #self.scrap_project_data()
-        #print('volume = ', self.find_volume())
+        self.scrap_project_data()
         self.show_orthophoto()
-
+        print('volume = ', self.find_volume())
+        
 
     # get all data from project:
     # not sure if I want this
@@ -50,7 +50,7 @@ class ODM:
 
 
     def find_volume(self):
-        print('Calculating volume of GeoTiff')
+        print('Calculating volume of GeoTiff, may take a some time', flush=True)
         # ordering of bounds tuple is 0 left, 1 bottom, 2 right, 3 top
         width = self.bounds[2]- self.bounds[0]
         length = self.bounds[3] - self.bounds[1]
@@ -67,6 +67,8 @@ class ODM:
                     #
                     pixel_height += item
         pixel_area = (width* length) / (width_pixels * length_pixels)
+
+
         print(f'{pixel_height=}, {pixel_area=}')
         print(f'area of base, area ={num_good_values*pixel_area}, num of valid pixels = {num_good_values}', flush=True)
         '''
@@ -75,6 +77,16 @@ class ODM:
         '''
         self.area = pixel_area
         self.volume = pixel_height * pixel_area
+
+        # send data to writer to be saved
+        data_dict ={}
+        data_dict['pixel_area'] = pixel_area
+        data_dict['base_area'] = num_good_values*pixel_area
+        data_dict['valid_pixels'] = num_good_values
+        data_dict['volume'] = self.volume
+
+        save_data(data_dict, self.locations['project_location'])
+
         return self.volume
 
 

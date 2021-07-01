@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import json
+
 
 '''
 TODO
@@ -26,3 +28,10 @@ def save_image(img_arr, name, project_path):
     path = write_dir+ '/' + name  # path to newely created image 
     plt.imsave(path, img_arr, cmap='magma')
 
+
+
+def save_data(data_dict, project_path):
+    location = project_path + '/python_output/odm_output.txt'
+
+    with open(location, 'w') as f:
+        json.dump(data_dict, f, ensure_ascii=False, indent=4)
