@@ -74,8 +74,13 @@ def get_location():
     # check for all_gcp.csv, if does not exist then do not use gcp 
     if 'all_gcp.csv' in directory:
         print('"all_gcp" csv found')
-        print('continuing with GCP') 
-        location_dict['all_gcp_location'] = project_location+'/all_gcp.csv'
+        print('recommend creating GCP file for greater accuracy')
+        user_in = input('create gcp_list file?(Y/N) ')
+        if user_in == 'Y':
+            print('continuing with GCP') 
+            location_dict['all_gcp_location'] = project_location+'/all_gcp.csv'
+            return location_dict
+
     else:
         print('*'*40)
         print('WARNING')
@@ -102,6 +107,9 @@ def startup():
     if new_GCP is True: 
         print('creating new GCP file', flush=True)
         getGCP(locations)
+        # add gcp location to locations dict
+        locations['GCP_location'] = locations['project_location'] + '/gcp_list.txt'
+
 
     print('Running odm')
     run_odm(locations) 
@@ -110,7 +118,8 @@ def startup():
 
 
 if __name__ == '__main__':
-    #locations = startup()
-    locations = get_location()
+    locations = startup()
+    #locations = get_location()
+    # create ODM class instance for the odm outputs
     odm_eval.ODM(locations)
-
+    
