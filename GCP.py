@@ -24,7 +24,6 @@ class GCP_pic:
     
     def GCP_gps(self, gps, distance):
         self.gcp_dict = {}
-        print(distance)
         self.gcp_dict['distance'] = distance
         
         self.gcp_dict['gps'] = convert_coordinate_UTM(gps)
@@ -137,7 +136,6 @@ def order_pic(GCP_dict, images_directory):
         for gcp in arr:
             list_dict.append(gcp) 
             gcp = gcp[:2] 
-            print(gcp)
             points.append(gcp)
 
     points = np.array(points)
