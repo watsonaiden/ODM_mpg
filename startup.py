@@ -1,6 +1,6 @@
 import GCP
 import os
-import odm_eval
+from odm_eval import ODM_eval
 
 
 def getGCP(locations):
@@ -121,5 +121,5 @@ if __name__ == '__main__':
     locations = startup()
     #locations = get_location()
     # create ODM class instance for the odm outputs
-    odm_eval.ODM(locations)
+    ODMEval(locations)
     

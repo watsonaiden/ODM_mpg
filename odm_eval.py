@@ -6,13 +6,13 @@ import os
 from GCP import convert_coordinate_UTM
 from writer import save_image, save_data
 
-class ODM:
+class ODMEval:
     def __init__(self, locations):
         self.locations = locations
         self.scrap_project_data()
-        self.show_orthophoto()
+        #self.show_orthophoto()
         print('volume = ', self.find_volume())
-        
+          
 
     # get all data from project:
     # not sure if I want this
@@ -48,7 +48,6 @@ class ODM:
                 save_image(self.canopy_model, 'canopy.jpg', self.locations['project_location'])
 
 
-
     def find_volume(self):
         print('Calculating volume of GeoTiff, may take a some time', flush=True)
         # ordering of bounds tuple is 0 left, 1 bottom, 2 right, 3 top
@@ -68,7 +67,7 @@ class ODM:
                     pixel_height += item
         pixel_area = (width* length) / (width_pixels * length_pixels)
 
-
+        print('num of good pixels =', num_good_values)
         print(f'{pixel_height=}, {pixel_area=}')
         print(f'area of base, area ={num_good_values*pixel_area}, num of valid pixels = {num_good_values}', flush=True)
         '''
@@ -134,6 +133,6 @@ class ODM:
         pyplot.show()
 
 if __name__ == '__main__':
-    odm = ODM('l')
-    odm.show_orthophoto()
+    dic = {'project_location': 'C:/Users/Hypnotic/Desktop/ODM/ssh_odm'}
+    odm = ODM_eval(dic)
 
