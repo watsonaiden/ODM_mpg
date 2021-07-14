@@ -37,12 +37,14 @@ class GCP_pic:
 
     #get GPS data from files EXIF
     def set_gps(self):
-        exif_table = {}
-        with Image.open(self.filename) as image:
-            info = image.getexif()
-            for tag, value in info.items():
-                decoded = TAGS.get(tag, tag)
-                exif_table[decoded] = value
+
+           # turn exif into dict https://stackoverflow.com/questions/4764932/in-python-how-do-i-read-the-exif-data-for-an-image
+            exif_table = {
+                TAGS[k]: v
+                for k, v in image._getexif().items()
+                if k in TAGS
+            }
+
             gps_info = {}
             for key in exif_table['GPSInfo'].keys():
                 decode = GPSTAGS.get(key,key)
