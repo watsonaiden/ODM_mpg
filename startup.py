@@ -96,8 +96,13 @@ def get_location():
 
 # runs the odm
 def run_odm(locations):
-    command = f'docker run -ti --rm -v {locations["project_location"]}:/datasets/code opendronemap/odm --project-path /datasets --dsm --dtm --force-gps --smrf-window 10 --smrf-threshold 0.15 --smrf-slope 0.1 --rerun-all --max-concurrency 3'
-    os.system(command)
+    print(f'{locations["project_location"]=}')
+    command = f'docker run -ti --rm -v {locations["project_location"]}:/datasets/code opendronemap/odm --project-path /datasets --dsm --dtm --force-gps --smrf-window 10 --smrf-threshold 0.15 --smrf-slope 0.1 --rerun-all --max-concurrency 20 --ignore-gsd --orthophoto-resolution 2 --dem-resolution 2'
+    output = os.system(command)
+        
+    if output != 0:
+        print('odm run failed, exiting program, please check error')
+        exit()
 
 def startup():
     locations = get_location()
