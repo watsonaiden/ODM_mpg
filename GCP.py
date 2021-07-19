@@ -37,23 +37,23 @@ class GCP_pic:
 
     #get GPS data from files EXIF
     def set_gps(self):
+            with Image.open(self.filename) as image:
+               # turn exif into dict https://stackoverflow.com/questions/4764932/in-python-how-do-i-read-the-exif-data-for-an-image
+                exif_table = {
+                    TAGS[k]: v
+                    for k, v in image._getexif().items()
+                    if k in TAGS
+                }
 
-           # turn exif into dict https://stackoverflow.com/questions/4764932/in-python-how-do-i-read-the-exif-data-for-an-image
-            exif_table = {
-                TAGS[k]: v
-                for k, v in image._getexif().items()
-                if k in TAGS
-            }
-
-            gps_info = {}
-            for key in exif_table['GPSInfo'].keys():
-                decode = GPSTAGS.get(key,key)
-                gps_info[decode] = exif_table['GPSInfo'][key]
-            lon = -1 * convert_to_dec(gps_info['GPSLongitude'])
-            lat = convert_to_dec(gps_info['GPSLatitude'])
-            self.lat = lat
-            self.lon = lon
-        
+                gps_info = {}
+                for key in exif_table['GPSInfo'].keys():
+                    decode = GPSTAGS.get(key,key)
+                    gps_info[decode] = exif_table['GPSInfo'][key]
+                lon = -1 * convert_to_dec(gps_info['GPSLongitude'])
+                lat = convert_to_dec(gps_info['GPSLatitude'])
+                self.lat = lat
+                self.lon = lon
+            
     def GCP_file_string(self):
        # Should not be getting file string if no GCP in picture
         assert self.GCP == True
