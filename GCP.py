@@ -226,11 +226,13 @@ def convert_coordinate_UTM(gps):
 
 
 def create_GCP_file(GCP_list, coor_system='+proj=utm +zone=11 +ellps=WGS84 +datum=WGS84 +units=m +no_defs' , filename='gcp_list.txt'):
-    # ODM looks for this filename
-    with open(filename, 'w') as f:
-        f.write(f'{coor_system}\n')
-        for GCP_img in GCP_list:
-            f.write(GCP_img.GCP_file_string()+'\n')
+    # ODM crashes if gcp_list exists but has no entire so check for that
+    if len(GCP_list) != 0:
+        # ODM looks for this filename
+        with open(filename, 'w') as f:
+            f.write(f'{coor_system}\n')
+            for GCP_img in GCP_list:
+                f.write(GCP_img.GCP_file_string()+'\n')
 
 
 
