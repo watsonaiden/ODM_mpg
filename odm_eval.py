@@ -16,7 +16,18 @@ class ODMEval:
         #self.show_orthophoto()
         print('volume = ', self.find_volume())
           
-    
+    # for subtracting canopy models to see growth 
+    def __sub__(self, other):
+        pass      
+        
+    # returns row, col pixels relating to specific coordinate x,y 
+    def index(self, x,y):
+        return rio.transform.rowcol(self.affine, x, y)
+
+    # return coordinate relating to specific xy, inverse of index func
+    def index_coordiante(self, x,y):
+        return self.affine * (x,y) 
+
     def save(self):
         # save the masked versions of dsm and dtm since normal tif version is not easily readable
         print('Saving Tiffs as jpgs for human readability')
@@ -37,6 +48,8 @@ class ODMEval:
             with rio.open(dtm_path) as dtm_dataset:
                  
                 # should be equal size otherwise something went wrong
+                self.affine = dsm_dataset.transform # the affine is used to transform from pixel x,y to coordinate system and back
+                assert dsm_dataset.transform = dtm_dataset.transform
                 assert dsm_dataset.bounds == dtm_dataset.bounds
 
                 self.bounds = dsm_dataset.bounds
@@ -140,7 +153,11 @@ class ODMEval:
         x_val, y_val = [], []
         for gcp in unique_GCP:
             # index converts the coordinate to pixel value in the given picture
-            x_pix, y_pix = img.index(gcp[0], gcp[1])
+
+            # ortho transform should be same as dem transofmr
+            assert img.transform == self.affine 
+            
+            x_pix, y_pix = self.index(gcp[0], gcp[1])
             x_val.append(x_pix)
             y_val.append(y_pix)
 
