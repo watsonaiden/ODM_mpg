@@ -112,11 +112,13 @@ class ODMEval:
 
     # shows orthophoto with gcp plotted
     def show_orthophoto(self):
-        if 'GCP_location' not in self.locations:
+        files = os.listdir(self.project_location)
+        if 'gcp_list.txt' not in files:
             print('no GCP file to compare with')
             return -1
         unique_GCP = [] 
-        with open(self.locations['GCP_location'], 'r') as gcp:
+        gcp_location = self.project_location + '/gcp_list.txt'
+        with open(gcp_location, 'r') as gcp:
             Lines = gcp.readlines()
             # first line is identification string so remove
             utm_string = Lines.pop(0)
@@ -131,7 +133,7 @@ class ODMEval:
         # unique GCP is a list of all unique GCP that should be in orthophoto
 
 
-        orthophoto_path = self.locations['project_location'] + '/odm_orthophoto/odm_orthophoto.tif'
+        orthophoto_path = self.project_location + '/odm_orthophoto/odm_orthophoto.tif'
         img = rio.open(orthophoto_path)
 
         x_val, y_val = [], []
@@ -150,10 +152,11 @@ class ODMEval:
         pyplot.imshow(rgb_arr)
         # note pyplot inverts axis here so must feed it y,x instead of x,y
         pyplot.plot(y_val, x_val, '.', color='red')
-        pyplot.savefig(self.locations['project_location']+'/python_output/orthophoto.jpg')
+        #pyplot.savefig(self.locations['project_location']+'/python_output/orthophoto.jpg')
         pyplot.show()
 
 if __name__ == '__main__':
     loc = 'C:/Users/Hypnotic/Desktop/ODM/test_setup'
     odm = ODMEval(loc)
+    odm.show_orthophoto()
 
