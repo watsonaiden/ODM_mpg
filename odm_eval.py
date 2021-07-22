@@ -12,6 +12,7 @@ class ODMEval:
     def __init__(self, project_location):
         self.project_location = project_location
         self.scrap_project_data()
+        self.save()
         #self.show_orthophoto()
         print('volume = ', self.find_volume())
           
