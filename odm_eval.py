@@ -6,7 +6,7 @@ import os
 from GCP import convert_coordinate_UTM
 from writer import save_image, save_data
 import json
-
+import time
 
 class ODMEval:
     def __init__(self, project_location, save=False):
@@ -19,14 +19,37 @@ class ODMEval:
           
     # for subtracting canopy models to see growth 
     def __sub__(self, other):
-        pass      
-        
+
+
+        row, col = odm.canopy_model.shape    
+        row_other, col_other = other.canopy_model.shape
+
+        subtracted = np.zeros((row,col))
+         
+        for r in range(row):
+            for c in range(col):
+                # covert row, col to its gps coordinate
+                x_coor, y_coor  = self.index_coordinate(r,c) 
+                # use gps coordinate to find related row,col in other 
+                r_other, c_other = other.index(x_coor, y_coor)
+                # check if col, row actually is in image
+                if r_other >= 0 and r_other < row_other and c_other >= 0 and c_other < col_other:
+                    # check if either value is nan
+                    subtracted[r,c] = self.canopy_model[r][c] - other.canopy_model[r_other][c_other]
+                else:
+                    subtracted[r,c] = np.nan
+         
+        return subtracted
+
+
+
+
     # returns row, col pixels relating to specific coordinate x,y 
     def index(self, x,y):
-        return rio.transform.rowcol(self.affine, x, y)
+        return rio.transform.rowcol(self.affine, x, y)[::-1] # returns col, row so invert for user simplicity
 
     # return coordinate relating to specific xy, inverse of index func
-    def index_coordiante(self, x,y):
+    def index_coordinate(self, x,y):
         return self.affine * (x,y) 
 
     def save(self):
@@ -173,6 +196,13 @@ class ODMEval:
 
 if __name__ == '__main__':
     loc = 'C:/Users/Hypnotic/Desktop/ODM/test_setup'
+    s = time.time()
     odm = ODMEval(loc)
-    odm.show_orthophoto()
-
+    e = time.time()
+    print('setup', e-s)
+    #odm.show_orthophoto()
+    s = time.time()
+    sub = odm - odm
+    e = time.time()
+    print(e-s)
+    print(sub)
