@@ -43,13 +43,12 @@ class ODMEval:
 
 
 
-
     # returns row, col pixels relating to specific coordinate x,y 
-    def index(self, x,y):
+    def index_to_pixel(self, x,y):
         return rio.transform.rowcol(self.affine, x, y)[::-1] # returns col, row so invert for user simplicity
 
-    # return coordinate relating to specific xy, inverse of index func
-    def index_coordinate(self, x,y):
+    # return coordinate relating to specific pixel xy, inverse of index func
+    def index_to_coordinate(self, x,y):
         return self.affine * (x,y) 
 
     def save(self):
@@ -72,6 +71,11 @@ class ODMEval:
         with rio.open(ortho_path) as ortho:
             # affine is used to transform from pixel x,y to coorinate system and back
             self.affine = ortho.transform
+
+            # 0,4 are locations of pixel size in affine according to
+            #https://gis.stackexchange.com/questions/243639/how-to-take-cell-size-from-raster-using-python-or-gdal-or-rasterio
+            self.x_pixel_len = self.affine[0]
+            self.y_pixel_len = self.affine[4]
 
         with rio.open(dsm_path) as dsm_dataset:
             with rio.open(dtm_path) as dtm_dataset:
@@ -178,7 +182,7 @@ class ODMEval:
         x_val, y_val = [], []
         for gcp in unique_GCP:
             # index converts the coordinate to pixel value in the given picture
-            x_pix, y_pix = self.index(gcp[0], gcp[1])
+            x_pix, y_pix = self.index_to_pixel(gcp[0], gcp[1])
             x_val.append(x_pix)
             y_val.append(y_pix)
        
