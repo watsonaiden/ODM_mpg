@@ -8,6 +8,16 @@ from writer import save_image, save_data
 import json
 import time
 
+
+
+'''
+TODO - use indexing to get 1x1 m box with additional statistics
+
+
+'''
+
+
+
 class ODMEval:
     def __init__(self, project_location, save=False):
         self.project_location = project_location
@@ -17,11 +27,17 @@ class ODMEval:
         #self.show_orthophoto()
         print('volume = ', self.find_volume())
           
+    # returns array of sizeXsize around the gps_x,gps_y point in orthophoto
+    def mini_area(self,gps_x, gps_y, size=10) 
+        utm_x, utm_y = convert_coordinate_UTM(gps_x, gps_y, 0)[:2]
+        x,y = self.convert_to_pixel(utm_x, utm_y) 
+        print(x,y)
+
+
+
     # for subtracting canopy models to see growth 
     def __sub__(self, other):
-
-
-        row, col = odm.canopy_model.shape    
+        row, col = self.canopy_model.shape    
         row_other, col_other = other.canopy_model.shape
 
         subtracted = np.zeros((row,col))
@@ -29,9 +45,9 @@ class ODMEval:
         for r in range(row):
             for c in range(col):
                 # covert row, col to its gps coordinate
-                x_coor, y_coor  = self.index_coordinate(r,c) 
+                x_coor, y_coor  = self.index_to_coordinate(r,c) 
                 # use gps coordinate to find related row,col in other 
-                r_other, c_other = other.index(x_coor, y_coor)
+                r_other, c_other = other.index_to_pixel(x_coor, y_coor)
                 # check if col, row actually is in image
                 if r_other >= 0 and r_other < row_other and c_other >= 0 and c_other < col_other:
                     # check if either value is nan
@@ -194,19 +210,23 @@ class ODMEval:
         rgb_arr = np.transpose(arr, (1,2,0))
         pyplot.imshow(rgb_arr)
         # note pyplot inverts axis here so must feed it y,x instead of x,y
-        pyplot.plot(y_val, x_val, '.', color='red')
+        pyplot.plot(x_val, y_val, '.', color='red')
         #pyplot.savefig(self.locations['project_location']+'/python_output/orthophoto.jpg')
         pyplot.show()
 
 if __name__ == '__main__':
-    loc = 'C:/Users/Hypnotic/Desktop/ODM/test_setup'
-    s = time.time()
-    odm = ODMEval(loc)
+    loc = 'C:/Users/Hypnotic/Desktop/ODM/Unit_020_D'
+    loc_2 = "C:/Users/Hypnotic/Desktop/ODM/Unit_20_post"
+    odm_pre = ODMEval(loc)
+    odm_post = ODMEval(loc_2)
+
+    s = time.time() 
+    sub = odm_post - odm_pre
     e = time.time()
-    print('setup', e-s)
+    print('time elapsed for sub', e-s)
+    np.save('sub.npy', sub)
+
+    pyplot.imshow(sub)
+    pyplot.colorbar()
+    pyplot.show()
     #odm.show_orthophoto()
-    s = time.time()
-    sub = odm - odm
-    e = time.time()
-    print(e-s)
-    print(sub)
