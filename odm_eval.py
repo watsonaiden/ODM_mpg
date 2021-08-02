@@ -16,6 +16,18 @@ TODO - use indexing to get 1x1 m box with additional statistics
 
 '''
 
+class MiniArea:
+    def __init__(self, ODM_object,x, y, size=10):
+        print(x,y)
+        self.pixel_length_x, self.pixel_length_y = ODM_object.x_pixel_len, ODM_object.y_pixel_len
+        rows, cols = int(size // self.pixel_length_y), int(size // self.pixel_length_x)
+        print(f'{rows =}{cols=}')
+        row_min, row_max, col_min, col_max = y-rows//2, y+rows//2,x-cols//2,x+cols//2
+        print(row_min, row_max, col_min, col_max)
+        matrix_mini_area = np.asarray(ODM_object.canopy_model)
+        
+        self.matrix_mini_area = matrix_mini_area[row_min:row_max, col_min:col_max]
+        print(self.matrix_mini_area.shape)
 
 
 class ODMEval:
@@ -28,11 +40,9 @@ class ODMEval:
         print('volume = ', self.find_volume())
           
     # returns array of sizeXsize around the gps_x,gps_y point in orthophoto
-    def mini_area(self,gps_x, gps_y, size=10) 
-        utm_x, utm_y = convert_coordinate_UTM(gps_x, gps_y, 0)[:2]
-        x,y = self.convert_to_pixel(utm_x, utm_y) 
-        print(x,y)
-
+    def mini_area(self,gps_x, gps_y, size=10):
+        x,y = self.index_to_pixel(gps_x, gps_y) 
+        return MiniArea(self, x,y)        
 
 
     # for subtracting canopy models to see growth 
@@ -91,7 +101,7 @@ class ODMEval:
             # 0,4 are locations of pixel size in affine according to
             #https://gis.stackexchange.com/questions/243639/how-to-take-cell-size-from-raster-using-python-or-gdal-or-rasterio
             self.x_pixel_len = self.affine[0]
-            self.y_pixel_len = self.affine[4]
+            self.y_pixel_len = -self.affine[4]
 
         with rio.open(dsm_path) as dsm_dataset:
             with rio.open(dtm_path) as dtm_dataset:
@@ -216,17 +226,7 @@ class ODMEval:
 
 if __name__ == '__main__':
     loc = 'C:/Users/Hypnotic/Desktop/ODM/Unit_020_D'
-    loc_2 = "C:/Users/Hypnotic/Desktop/ODM/Unit_20_post"
     odm_pre = ODMEval(loc)
-    odm_post = ODMEval(loc_2)
+    x,y = odm_pre.index_to_coordinate(3000,3000)
+    mini_area = odm_pre.mini_area(x,y)
 
-    s = time.time() 
-    sub = odm_post - odm_pre
-    e = time.time()
-    print('time elapsed for sub', e-s)
-    np.save('sub.npy', sub)
-
-    pyplot.imshow(sub)
-    pyplot.colorbar()
-    pyplot.show()
-    #odm.show_orthophoto()
