@@ -120,63 +120,25 @@ class ODMEval:
 
     def find_volume(self):
         # check if volume has already been calculated
-        try:
-            
-            json_location = self.project_location + '/python_output/odm_output.txt'
-            with open(json_location) as j_file:
-                print('found odm_output json file, scraping found data')
-                data = json.load(j_file)
-            self.volume = data['volume']
-            self.area_of_pixel = data['area_of_pixel']
-            self.base_area = data['base_area']
-            return self.volume
+        print('Calculating volume of GeoTiff, may take a some time', flush=True)
+        # ordering of bounds tuple is 0 left, 1 bottom, 2 right, 3 top
+        width = self.bounds[2]- self.bounds[0]
+        length = self.bounds[3] - self.bounds[1]
 
-        except FileNotFoundError:
-            print('Calculating volume of GeoTiff, may take a some time', flush=True)
-            # ordering of bounds tuple is 0 left, 1 bottom, 2 right, 3 top
-            width = self.bounds[2]- self.bounds[0]
-            length = self.bounds[3] - self.bounds[1]
+        print(self.canopy_model.shape) 
+        width_pixels, length_pixels = self.canopy_model.shape
+        sum_pixel_height = np.sum(self.canopy_model)
+        # area of each individual pixel = total area / # of pixels
+        area_of_pixel = self.y_pixel_len * self.x_pixel_len
 
-            print(self.canopy_model.shape) 
-            width_pixels, length_pixels = self.canopy_model.shape
-            
-            sum_pixel_height = 0
-            num_good_values = 0
-            for row in self.canopy_model:
-                for item in row:
-                    # checks for nonexistent values
-                    if not np.ma.is_masked(item):
-                        # count number of good tiles to find actual area used
-                        num_good_values += 1
-                        #
-                        sum_pixel_height += item
-
-            # area of each individual pixel = total area / # of pixels
-            area_of_pixel = (width* length) / (width_pixels * length_pixels)
-
-            print('num of good pixels =', num_good_values)
-            print(f'{sum_pixel_height=}, {area_of_pixel=}')
-            print(f'area of base, area ={num_good_values*area_of_pixel}, num of valid pixels = {num_good_values}', flush=True)
-            '''
-            VOLUME = area_of_pixel * sum_pixel_height
-            area_of_pixel = (metric_length*metric_height) / (num_length_pixel *num_width_pixel)
-            '''
-            self.area_of_pixel = area_of_pixel
-            self.volume = sum_pixel_height * area_of_pixel
-            self.base_area = num_good_values*area_of_pixel
-
-
-
-            # send data to writer to be saved
-            data_dict ={}
-            data_dict['area_of_pixel'] = self.area_of_pixel
-            data_dict['base_area'] = self.base_area
-            data_dict['valid_pixels'] = num_good_values
-            data_dict['volume'] = self.volume
-
-            save_data(data_dict, self.project_location)
-
-            return self.volume
+        #print('num of good pixels =', num_good_values)
+        print(f'{sum_pixel_height=}, {area_of_pixel=}')
+        '''
+        VOLUME = area_of_pixel * sum_pixel_height
+        area_of_pixel = (metric_length*metric_height) / (num_length_pixel *num_width_pixel)
+        '''
+        self.volume = sum_pixel_height * area_of_pixel
+        return self.volume
 
 
     # shows orthophoto with gcp plotted
