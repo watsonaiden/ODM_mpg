@@ -71,7 +71,7 @@ class ODMEval:
 
     # returns row, col pixels relating to specific coordinate x,y 
     def index_to_pixel(self, x,y):
-        return rio.transform.rowcol(self.affine, x, y)[::-1] # returns col, row so invert for user simplicity
+        return rio.transform.rowcol(self.affine, x, y)
 
     # return coordinate relating to specific pixel xy, inverse of index func
     def index_to_coordinate(self, x,y):
@@ -170,9 +170,9 @@ class ODMEval:
         x_val, y_val = [], []
         for gcp in unique_GCP:
             # index converts the coordinate to pixel value in the given picture
-            x_pix, y_pix = self.index_to_pixel(gcp[0], gcp[1])
-            x_val.append(x_pix)
-            y_val.append(y_pix)
+            row_pix, col_pix = self.index_to_pixel(gcp[0], gcp[1])
+            x_val.append(col_pix)
+            y_val.append(row_pix)
        
         # convert rasterio img to np array
         arr = img.read()
