@@ -37,35 +37,73 @@ class ODMEval:
         if save:
             self.save()
         #self.show_orthophoto()
+        s = time.time()
         print('volume = ', self.find_volume())
-          
+        print(time.time()-s)
+
     # returns array of sizeXsize around the gps_x,gps_y point in orthophoto
     def mini_area(self,gps_x, gps_y, size=10):
         x,y = self.index_to_pixel(gps_x, gps_y) 
         return MiniArea(self, x,y)        
 
 
-    # for subtracting canopy models to see growth 
     def __sub__(self, other):
-        row, col = self.canopy_model.shape    
-        row_other, col_other = other.canopy_model.shape
+        # bounding box tuple is ordered in this way left, bottom, right, top
+        '''
+        larger right and upper means bigger
+        smaller left and bottom means bigger
+        '''
+        name_other = other.project_location.split('/')[-1]
+        name_self = self.project_location.split('/')[-1]
+        print(f'subtracting {name_self} - {name_other}')
 
-        subtracted = np.zeros((row,col))
+        min_dimensions = []
+        for i, locations in enumerate(zip(self.bounds, other.bounds)):
+            # first two are left and bottom which are smaller is bigger
+            if i <2:
+                min_dimensions.append(max(locations))
+            # this is for right and upper where max is bigger 
+            else:
+                min_dimensions.append(min(locations))
+
+
+        # min_dimensions should be where the two overlap
+
+
+        # index upper left
+        self_lower_row, self_lower_col = self.index_to_pixel(min_dimensions[0], min_dimensions[3])
+        other_lower_row, other_lower_col = other.index_to_pixel(min_dimensions[0], min_dimensions[3])
+
+        self_upper_row, self_upper_col = self.index_to_pixel(min_dimensions[2], min_dimensions[1])
+        other_upper_row, other_upper_col = other.index_to_pixel(min_dimensions[2], min_dimensions[1])
+
          
-        for r in range(row):
-            for c in range(col):
-                # covert row, col to its gps coordinate
-                x_coor, y_coor  = self.index_to_coordinate(r,c) 
-                # use gps coordinate to find related row,col in other 
-                r_other, c_other = other.index_to_pixel(x_coor, y_coor)
-                # check if col, row actually is in image
-                if r_other >= 0 and r_other < row_other and c_other >= 0 and c_other < col_other:
-                    # check if either value is nan
-                    subtracted[r,c] = self.canopy_model[r][c] - other.canopy_model[r_other][c_other]
-                else:
-                    subtracted[r,c] = np.nan
-         
-        return subtracted
+        self_row, self_col = self_upper_row - self_lower_row,self_upper_col - self_lower_col
+        other_row, other_col =other_upper_row - other_lower_row,other_upper_col - other_lower_col 
+        
+        # force shape to be the same, can be slightly offset by 1
+        if self_row != other_row:
+            diff = abs(self_row - other_row)
+            if self_upper_row > other_upper_row:
+                self_upper_row -= diff 
+            else:
+                other_upper_row -= diff
+
+        if self_col != other_col:
+            diff = abs(self_col - other_col)
+            if self_upper_col > other_upper_col:
+                self_upper_col -= diff
+            else:
+                other_upper_col -= diff
+
+       
+        # indexing to cutout correct shape 
+        self_np = self.canopy_model[self_lower_row:self_upper_row, self_lower_col:self_upper_col]
+        other_np = other.canopy_model[other_lower_row:other_upper_row, other_lower_col:other_upper_col]
+        print(self_np.shape)
+        print(self_np.shape)
+
+        return self_np - other_np 
 
 
 
@@ -110,7 +148,7 @@ class ODMEval:
                 self.bounds = dsm_dataset.bounds
                 # read the dsm_dataset into np array form
                 # use read(1) since shape is (1, x, y) read(1) causes output to be (x,y) removing need for a reshape
-                self.dsm = dsm_dataset.read(1, masked=True)  # masked makes unknown data NaN instead of -9999, if not used causes strange looking picture
+                self.dsm = dsm_dataset.read(1, masked=True)  # mask might be necessary, but messes with subtraction
                 self.dtm = dtm_dataset.read(1, masked=True)
 
                 # find the element by element difference of the models to detect object heights
