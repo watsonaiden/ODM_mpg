@@ -140,6 +140,12 @@ class ODMEval:
             #https://gis.stackexchange.com/questions/243639/how-to-take-cell-size-from-raster-using-python-or-gdal-or-rasterio
             self.x_pixel_len = self.affine[0]
             self.y_pixel_len = -self.affine[4]
+            # shape is (4, x,y) need to change to (3,x,y) 
+            img_arr = ortho.read()[:3]
+            # move color axis back
+            img_arr = np.transpose(img_arr, (1,2,0)) 
+            self.orthophoto = img_arr
+
 
         with rio.open(dsm_path) as dsm_dataset:
             with rio.open(dtm_path) as dtm_dataset:
@@ -202,8 +208,8 @@ class ODMEval:
         # unique GCP is a list of all unique GCP that should be in orthophoto
 
 
-        orthophoto_path = self.project_location + '/odm_orthophoto/odm_orthophoto.tif'
-        img = rio.open(orthophoto_path)
+        #orthophoto_path = self.project_location + '/odm_orthophoto/odm_orthophoto.tif'
+        #img = rio.open(orthophoto_path)
 
         x_val, y_val = [], []
         for gcp in unique_GCP:
