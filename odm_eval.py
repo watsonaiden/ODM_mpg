@@ -218,16 +218,9 @@ class ODMEval:
             x_val.append(col_pix)
             y_val.append(row_pix)
        
-        # convert rasterio img to np array
-        arr = img.read()
-        arr = arr[:3]
-        # move color layer to the back
-        # before change is 3,l,w needs to be l,w,3
-        rgb_arr = np.transpose(arr, (1,2,0))
-        pyplot.imshow(rgb_arr)
+        pyplot.imshow(self.orthophoto)
         # note pyplot inverts axis here so must feed it y,x instead of x,y
         pyplot.plot(x_val, y_val, '.', color='red')
-        #pyplot.savefig(self.locations['project_location']+'/python_output/orthophoto.jpg')
         pyplot.show()
 
 if __name__ == '__main__':
