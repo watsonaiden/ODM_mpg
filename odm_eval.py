@@ -223,6 +223,34 @@ class ODMEval:
         pyplot.plot(x_val, y_val, '.', color='red')
         pyplot.show()
 
+def read_frame_csv(filename):
+    # first key is site number, then frames # within site then array of the four points making up the corners
+    frame_dict = {}
+    csv = pd.read_csv(filename)
+    for index,row in csv.iterrows():
+        split_row = row['Name'].split('-')
+        # some rows not formated correctly thus must be caught
+        if len(split_row) != 1:
+            site, frame_num, edge = split_row
+            dict_location = {}
+            if site in frame_dict:
+                dict_location = frame_dict[site]
+            else:
+                frame_dict[site] = {}
+                dict_location = frame_dict[site]
+            if frame_num in dict_location:
+                dict_location = dict_location[frame_num]
+            else:
+                dict_location[frame_num] = [None]*4
+                dict_location = dict_location[frame_num]
+            lat, lon = row['Latitude'], row['Longitude']
+            utm_lat, utm_lon, _ = convert_coordinate_UTM((lat,lon, 0))
+            dict_location[int(edge)-1] = (utm_lat, utm_lon) 
+
+
+
+    return frame_dict
+
 if __name__ == '__main__':
     loc = 'C:/Users/Hypnotic/Desktop/ODM/Unit_020_D'
     odm_pre = ODMEval(loc)
